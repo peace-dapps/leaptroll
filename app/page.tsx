@@ -27,12 +27,26 @@ function formatUsd(n?: number) {
   if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
   return `$${n.toFixed(2)}`;
 }
-function formatPrice(p?: string) {
+function formatPrice(p?: string): React.ReactNode {
   if (!p) return "—";
   const n = parseFloat(p);
-  if (n < 0.001) return `$${n.toExponential(3)}`;
-  if (n < 1) return `$${n.toFixed(6)}`;
-  return `$${n.toFixed(4)}`;
+  if (n === 0) return "$0";
+  if (n >= 1) return `$${n.toFixed(4)}`;
+  if (n >= 0.001) return `$${n.toFixed(6)}`;
+
+  // For very small numbers like 0.00002651 → render as $0.0₄2651
+  const str = n.toFixed(20);
+  const match = str.match(/^0\.(0+)(\d+)/);
+  if (!match) return `$${n.toFixed(8)}`;
+  const zeros = match[1].length;
+  const sig = match[2].slice(0, 4);
+  const subscripts = "₀₁₂₃₄₅₆₇₈₉";
+  const subZeros = zeros.toString().split("").map(d => subscripts[parseInt(d)]).join("");
+  return (
+    <>
+      $0.0<span className="text-[0.7em] align-baseline">{subZeros}</span>{sig}
+    </>
+  );
 }
 function formatChange(c?: number) {
   if (c === undefined || c === null) return { text: "—", up: false };
